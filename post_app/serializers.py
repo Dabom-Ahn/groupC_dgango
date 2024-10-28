@@ -24,3 +24,11 @@
   - deserializer (역직렬화) : 반대로 클라이언트로부터 전달받은 json데이터를 장고 전용의 모델 인스턴스 구조로 역변환처리
   - validation (데이터 검증) : 역직렬화시 클라이언트가 보낸 데이터를 필드별로 유효성 검사 처리
 """
+
+from rest_framework import serializers
+from .models import Post
+
+class PostSerializer(serializers.ModelSerializer):
+  class Meta:
+    model : Post
+    fields = ['id','title','body','slug','category','created','updated']
