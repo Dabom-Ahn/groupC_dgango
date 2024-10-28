@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
-from djanog.utils.crypto import get_random_string
+from django.utils.crypto import get_random_string
 
 class Post(models.Model):
   CATEGORY = (('STUDY','Study'), ('DAIARY','Diary'), ('COMMON','Common'))
