@@ -10,3 +10,25 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 
 
+# 해당 view 함수가 GET, POST요청을 처리할 수 있음을 나타냄
+@api_view(['GET', 'POST'])
+def posts(request):
+  # GET방식 요청이 들어왔을때 응답 처리
+  if request.method == 'GET':
+    posts = Post.objects.all()
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data)
+  
+  # POST방식 요청이 들어왔을떄 응답 처리
+  elif request.method == 'POST':
+    # POST요청시 같이 들어온 데이터를 역질렬화 처리
+    serializer = PostSerializer(data = request.data)
+    
+    # 역직렬화화된 데이터 검증후 인증 성공시
+    if serializer.is_valid():
+      serializer.save()
+      return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    # 역직렬화된 데이터의 검증 실패시 400 상태값 반환
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
