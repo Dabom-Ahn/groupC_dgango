@@ -1,34 +1,52 @@
 from django.shortcuts import render
 from post_app.models import Post
-# PostSerializer : Post 모델을 직렬화, 역직렬화시 필요한 클래스
 from post_app.serializers import PostSerializer
-# Response : DRF에서 제공하는 응답 객체로 json형식의 응답을 쉽게 반환처리
 from rest_framework.response import Response
-# api_view : DRF에서 HTTP메서드 (GET, POST, PUT, DELETE)를 처리하도록 뷰 정의
 from rest_framework.decorators import api_view
-# status : HTTP통신 상태 코드를 제공하는 모듈, 성공이나 오류에 대한 상태 정보를 제공
 from rest_framework import status
+from django.db.models import Q
 
-
-# 해당 view 함수가 GET, POST요청을 처리할 수 있음을 나타냄
 @api_view(['GET', 'POST'])
 def posts(request):
-  # GET방식 요청이 들어왔을때 응답 처리
-  if request.method == 'GET':
-    posts = Post.objects.all()
-    serializer = PostSerializer(posts, many=True)
-    return Response(serializer.data)
-  
-  # POST방식 요청이 들어왔을떄 응답 처리
-  elif request.method == 'POST':
-    # POST요청시 같이 들어온 데이터를 역질렬화 처리
-    serializer = PostSerializer(data = request.data)
-    
-    # 역직렬화화된 데이터 검증후 인증 성공시
-    if serializer.is_valid():
-      serializer.save()
-      return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    # 역직렬화된 데이터의 검증 실패시 400 상태값 반환
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+    # GET 방식 요청이 들어왔을 때 응답 처리
+    if request.method == 'GET':
+        # 요청 URL에 category와 query 쿼리 파라미터가 있는지 확인
+        category = request.query_params.get('category', None)
+        query = request.query_params.get('query', None)
+
+        # 기본 쿼리셋 설정
+        posts = Post.objects.all()
+
+        # category 파라미터가 있는 경우 필터링
+        if category:
+            posts = posts.filter(category=category.upper())
+
+        # query 파라미터가 있는 경우 제목과 본문에 검색어가 포함된 항목 필터링
+        if query:
+            posts = posts.filter(Q(title__icontains=query) | Q(body__icontains=query))
+
+        # 최신 순으로 정렬하여 상위 3개 항목 반환
+        posts = posts.order_by('-created')[:3]
+
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
+
+    # POST 방식 요청이 들어왔을 때 응답 처리
+    elif request.method == 'POST':
+        serializer = PostSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def search_posts(request):
+    query = request.query_params.get('query', None)  # 검색어 가져오기
+    if query:
+        # title 또는 body에 검색어가 포함된 게시물 필터링
+        posts = Post.objects.filter(Q(title__icontains=query) | Q(body__icontains=query))
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
+    return Response([])  # 검색어가 없을 경우 빈 리스트 반환
