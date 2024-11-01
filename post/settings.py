@@ -23,10 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-&l&k6$v5af(=j(wqj)$srv1dc3g&54um4=cr^e!9k7fz-z&o_c'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-``
+DEBUG = False
+
 ALLOWED_HOSTS = [
-  "group-c-dgango.vercel.app",
+    "group-c-dgango.vercel.app",
+    "localhost",
+    "127.0.0.1",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -126,6 +128,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # 추가: 배포 시 필요한 정적 파일 경로
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -133,7 +136,6 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
-    # "http://localhost:5173", 
     "https://group-c-health.vercel.app",
     "https://group-c-dgango.vercel.app"
 ]
@@ -148,3 +150,23 @@ CORS_ALLOW_HEADERS = [
     "content-type",
     "authorization",
 ]
+
+# Logging 설정: DEBUG=False일 때 오류 로그를 남길 수 있도록 파일 로깅 추가
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'error.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
